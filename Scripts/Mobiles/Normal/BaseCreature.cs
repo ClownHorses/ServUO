@@ -3922,6 +3922,14 @@ namespace Server.Mobiles
 
         public virtual void OnGaveMeleeAttack(Mobile defender)
         {
+            // The owner has a chance to gain Animal Taming when their pet lands a hit
+            PlayerMobile owner = ControlMaster as PlayerMobile;
+
+            if (Controlled && owner != null && owner.Alive && owner.Map == Map && owner.InRange(this, 20))
+            {
+                owner.CheckSkill(SkillName.AnimalTaming, 0.0, owner.Skills[SkillName.AnimalTaming].Cap);
+            }
+
             Poison p = GetHitPoison();
 
             XmlPoison xp = (XmlPoison)XmlAttach.FindAttachment(this, typeof(XmlPoison));
