@@ -59,7 +59,34 @@ namespace Server.Misc
 		{
 			_PollTimer = Timer.DelayCall(TimeSpan.Zero, TimeSpan.FromMilliseconds(100), ProcessCommand);
 
-			_Listen.BeginInvoke(r => ProcessInput(_Listen.EndInvoke(r)), null);
+			BeginRead();
+		}
+
+		private static void BeginRead()
+		{
+			_Listen.BeginInvoke(
+				r =>
+				{
+					string input;
+
+					try
+					{
+						input = _Listen.EndInvoke(r);
+					}
+					catch (System.IO.IOException)
+					{
+						// Can't use console (or maybe something else)
+						// On Linux this will make the process run in the background but emit output to the terminal and be super annoying.
+						Console.WriteLine("Console: Input unavailable, console commands disabled.");
+
+						_PollTimer.Stop();
+
+						return;
+					}
+
+					ProcessInput(input);
+				},
+				null);
 		}
 
 		private static void ProcessInput(string input)
@@ -86,7 +113,7 @@ namespace Server.Misc
 
 			Interlocked.Exchange(ref _Command, String.Empty);
 
-			_Listen.BeginInvoke(r => ProcessInput(_Listen.EndInvoke(r)), null);
+			BeginRead();
 		}
 
 		private static PageEntry[] _Pages;
